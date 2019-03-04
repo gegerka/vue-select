@@ -153,7 +153,6 @@
     border-color: transparent;
   }
   .v-select.single.open .selected-tag {
-    position: absolute;
     opacity: .4;
   }
   .v-select.single.searching .selected-tag {
@@ -204,7 +203,10 @@
     background: none;
     box-shadow: none;
     flex-grow: 1;
-    width: 0;
+  }
+  .v-select input[type="search"].choosen {
+    position: absolute;
+    opacity: 0;
   }
   .v-select.unsearchable input[type="search"] {
     opacity: 0;
@@ -314,9 +316,12 @@
         <slot v-for="option in valueAsArray" name="selected-option-container"
               :option="(typeof option === 'object')?option:{[label]: option}" :deselect="deselect" :multiple="multiple" :disabled="disabled">
           <span class="selected-tag" v-bind:key="option.index">
-            <slot name="selected-option" v-bind="(typeof option === 'object')?option:{[label]: option}">
-              {{ getOptionLabel(option) }}
-            </slot>
+            <div class="form-selectbox_value">
+              <div class="value">
+                <span>{{ getOptionLabel(option) }}</span>
+              </div>
+              <slot name="selected-label"/>
+            </div>
             <button v-if="multiple" :disabled="disabled" @click="deselect(option)" type="button" class="close" aria-label="Remove option">
               <span aria-hidden="true">&times;</span>
             </button>
@@ -324,27 +329,28 @@
         </slot>
 
         <input
-                ref="search"
-                v-model="search"
-                @keydown.delete="maybeDeleteValue"
-                @keyup.esc="onEscape"
-                @keydown.up.prevent="typeAheadUp"
-                @keydown.down.prevent="typeAheadDown"
-                @keydown.enter.prevent="typeAheadSelect"
-                @keydown.tab="onTab"
-                @blur="onSearchBlur"
-                @focus="onSearchFocus"
-                type="search"
-                class="form-control"
-                :autocomplete="autocomplete"
-                :disabled="disabled"
-                :placeholder="searchPlaceholder"
-                :tabindex="tabindex"
-                :readonly="!searchable"
-                :id="inputId"
-                role="combobox"
-                :aria-expanded="dropdownOpen"
-                aria-label="Search for option"
+          ref="search"
+          v-model="search"
+          @keydown.delete="maybeDeleteValue"
+          @keyup.esc="onEscape"
+          @keydown.up.prevent="typeAheadUp"
+          @keydown.down.prevent="typeAheadDown"
+          @keydown.enter.prevent="typeAheadSelect"
+          @keydown.tab="onTab"
+          @blur="onSearchBlur"
+          @focus="onSearchFocus"
+          type="search"
+          class="form-control"
+          :autocomplete="autocomplete"
+          :disabled="disabled"
+          :placeholder="searchPlaceholder"
+          :tabindex="tabindex"
+          :readonly="!searchable"
+          :id="inputId"
+          role="combobox"
+          :aria-expanded="dropdownOpen"
+          :class="{ 'choosen': valueAsArray.length !== 0 }"
+          aria-label="Search for option"
         >
 
       </div>
@@ -372,9 +378,9 @@
       <ul ref="dropdownMenu" v-if="dropdownOpen" class="dropdown-menu" :style="{ 'max-height': maxHeight }" role="listbox" @mousedown="onMousedown">
         <li role="option" v-for="(option, index) in filteredOptions" v-bind:key="index" :class="{ active: isOptionSelected(option), highlight: index === typeAheadPointer }" @mouseover="typeAheadPointer = index">
           <a @mousedown.prevent.stop="select(option)">
-          <slot name="option" v-bind="(typeof option === 'object')?option:{[label]: option}">
-            {{ getOptionLabel(option) }}
-          </slot>
+            <slot name="option" v-bind="(typeof option === 'object')?option:{[label]: option}">
+              {{ getOptionLabel(option) }}
+            </slot>
           </a>
         </li>
         <li v-if="!filteredOptions.length" class="no-options" @mousedown.stop="">
@@ -828,6 +834,7 @@
        * @return {void}
        */
       select(option) {
+
         if (!this.isOptionSelected(option)) {
           if (this.taggable && !this.optionExists(option)) {
             option = this.createOption(option)
@@ -835,8 +842,8 @@
           if(this.index) {
             if (!option.hasOwnProperty(this.index)) {
               return console.warn(
-                  `[vue-select warn]: Index key "option.${this.index}" does not` +
-                  ` exist in options object ${JSON.stringify(option)}.`
+                `[vue-select warn]: Index key "option.${this.index}" does not` +
+                ` exist in options object ${JSON.stringify(option)}.`
               )
             }
             option = option[this.index]
@@ -860,6 +867,7 @@
        * @return {void}
        */
       deselect(option) {
+
         if (this.multiple) {
           let ref = -1
           this.mutableValue.forEach((val) => {
@@ -879,6 +887,7 @@
        * @return {void}
        */
       clearSelection() {
+
         this.mutableValue = this.multiple ? [] : null
         this.onInput(this.mutableValue)
       },
@@ -889,6 +898,7 @@
        * @return {void}
        */
       onAfterSelect(option) {
+
         if (this.closeOnSelect) {
           this.open = !this.open
           this.$refs.search.blur()
@@ -905,8 +915,9 @@
        * @return {void}
        */
       toggleDropdown(e) {
+
         if (e.target === this.$refs.openIndicator || e.target === this.$refs.search || e.target === this.$refs.toggle ||
-            e.target.classList.contains('selected-tag') || e.target === this.$el) {
+          e.target.classList.contains('selected-tag') || e.target === this.$el) {
           if (this.open) {
             this.$refs.search.blur() // dropdown will close on blur
           } else {
@@ -924,6 +935,7 @@
        * @return {Boolean}        True when selected | False otherwise
        */
       isOptionSelected(option) {
+
         return this.valueAsArray.some(value => {
           if (typeof value === 'object') {
             return this.optionObjectComparator(value, option)
@@ -940,6 +952,7 @@
        * @returns {boolean}
        */
       optionObjectComparator(value, option) {
+
         if (this.index && value === option[this.index]) {
           return true
         } else if ((value[this.label] === option[this.label]) || (value[this.label] === option)) {
@@ -959,6 +972,7 @@
        * @returns {*}
        */
       findOptionByIndexValue(value) {
+
         this.options.forEach(_option => {
           if (JSON.stringify(_option[this.index]) === JSON.stringify(value)) {
             value = _option
@@ -973,6 +987,7 @@
        * @return {void}
        */
       onEscape() {
+
         if (!this.search.length) {
           this.$refs.search.blur()
         } else {
@@ -986,6 +1001,7 @@
        * @return {void}
        */
       onSearchBlur() {
+
         if (this.mousedown && !this.searching) {
           this.mousedown = false
         } else {
@@ -1008,8 +1024,9 @@
        * @returns {void}
        */
       closeSearchOptions(){
-        this.open = false
-        this.$emit('search:blur')
+        //
+        // this.open = false
+        // this.$emit('search:blur')
       },
 
       /**
@@ -1018,6 +1035,7 @@
        * @return {void}
        */
       onSearchFocus() {
+
         this.open = true
         this.$emit('search:focus')
       },
@@ -1028,6 +1046,7 @@
        * @return {this.value}
        */
       maybeDeleteValue() {
+
         if (!this.$refs.search.value.length && this.mutableValue && this.clearable) {
           return this.multiple ? this.mutableValue.pop() : this.mutableValue = null
         }
@@ -1041,6 +1060,7 @@
        * @return {boolean}
        */
       optionExists(option) {
+
         let exists = false
 
         this.mutableOptions.forEach(opt => {
@@ -1062,6 +1082,7 @@
        * @return {void}
        */
       maybePushTag(option) {
+
         if (this.pushTags) {
           this.mutableOptions.push(option)
         }
@@ -1075,6 +1096,7 @@
        * @return {void}
        */
       onMousedown() {
+
         this.mousedown = true
       }
     },
