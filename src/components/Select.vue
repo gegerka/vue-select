@@ -69,7 +69,6 @@
     display: flex;
     padding: 0 0 4px 0;
     background: none;
-    border: 1px solid rgba(60, 60, 60, .26);
     border-radius: 4px;
     white-space: normal;
   }
@@ -1024,9 +1023,8 @@
        * @returns {void}
        */
       closeSearchOptions(){
-        //
-        // this.open = false
-        // this.$emit('search:blur')
+        this.open = false
+        this.$emit('search:blur')
       },
 
       /**
