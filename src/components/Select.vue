@@ -69,6 +69,7 @@
     display: flex;
     padding: 0 0 4px 0;
     background: none;
+    border: 1px solid rgba(60, 60, 60, .26);
     border-radius: 4px;
     white-space: normal;
   }
@@ -152,6 +153,7 @@
     border-color: transparent;
   }
   .v-select.single.open .selected-tag {
+    position: absolute;
     opacity: .4;
   }
   .v-select.single.searching .selected-tag {
@@ -202,10 +204,7 @@
     background: none;
     box-shadow: none;
     flex-grow: 1;
-  }
-  .v-select input[type="search"].choosen {
-    position: absolute;
-    opacity: 0;
+    width: 0;
   }
   .v-select.unsearchable input[type="search"] {
     opacity: 0;
@@ -307,6 +306,7 @@
   }
 </style>
 
+
 <template>
   <div :dir="dir" class="dropdown v-select" :class="dropdownClasses">
     <div ref="toggle" @mousedown.prevent="toggleDropdown" class="dropdown-toggle">
@@ -315,12 +315,14 @@
         <slot v-for="option in valueAsArray" name="selected-option-container"
               :option="(typeof option === 'object')?option:{[label]: option}" :deselect="deselect" :multiple="multiple" :disabled="disabled">
           <span class="selected-tag" v-bind:key="option.index">
-            <div class="form-selectbox_value">
-              <div class="value">
-                <span>{{ getOptionLabel(option) }}</span>
-              </div>
-              <slot name="selected-label"/>
+            <slot name="selected-option" v-bind="(typeof option === 'object')?option:{[label]: option}">
+              <div class="form-selectbox_value">
+                <div class="value">
+                  {{ getOptionLabel(option) }}
+                </div>
+                <slot name="selected-label"/>
             </div>
+            </slot>
             <button v-if="multiple" :disabled="disabled" @click="deselect(option)" type="button" class="close" aria-label="Remove option">
               <span aria-hidden="true">&times;</span>
             </button>
@@ -383,7 +385,7 @@
           </a>
         </li>
         <li v-if="!filteredOptions.length" class="no-options" @mousedown.stop="">
-          <slot name="no-options">Sorry, no matching options.</slot>
+          <slot name="no-options">Извините, нет подходящих вариантов.</slot>
         </li>
       </ul>
     </transition>
@@ -916,7 +918,9 @@
       toggleDropdown(e) {
 
         if (e.target === this.$refs.openIndicator || e.target === this.$refs.search || e.target === this.$refs.toggle ||
-          e.target.classList.contains('selected-tag') || e.target === this.$el) {
+          e.target.classList.contains('selected-tag')
+          || e.target.classList.contains('value')
+          || e.target === this.$el) {
           if (this.open) {
             this.$refs.search.blur() // dropdown will close on blur
           } else {
@@ -1023,7 +1027,7 @@
        * @returns {void}
        */
       closeSearchOptions(){
-        this.open = false
+        // this.open = false
         this.$emit('search:blur')
       },
 
@@ -1033,8 +1037,7 @@
        * @return {void}
        */
       onSearchFocus() {
-
-        this.open = true
+        //this.open = true
         this.$emit('search:focus')
       },
 
