@@ -1027,7 +1027,7 @@
        * @returns {void}
        */
       closeSearchOptions(){
-        // this.open = false
+        this.open = false
         this.$emit('search:blur')
       },
 
